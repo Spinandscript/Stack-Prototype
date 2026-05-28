@@ -38,14 +38,6 @@ open index.html   # macOS
 
 ---
 
-## 🌐 Deploying to GitHub Pages
-
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Set source to **Deploy from a branch → main → / (root)**
-4. Your prototype will be live at `https://YOUR_USERNAME.github.io/stack-prototype`
-
----
 
 ## 🗂 File Structure
 
