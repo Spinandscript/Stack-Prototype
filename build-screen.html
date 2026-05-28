@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack — Build Screen</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #080810;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .phone {
+    width: 340px;
+    min-height: 680px;
+    background: #0d0d12;
+    border-radius: 36px;
+    border: 1.5px solid #2a2a3a;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+  }
+  .status-bar { padding: 12px 20px 6px; display: flex; justify-content: space-between; align-items: center; }
+  .status-bar span { color: #555; font-size: 11px; }
+  .screen { display: none; flex-direction: column; flex: 1; }
+  .screen.active { display: flex; }
+  .screen-header { padding: 10px 20px 14px; display: flex; align-items: center; gap: 10px; }
+  .screen-title { color: #f0f0f0; font-size: 17px; font-weight: 500; }
+  .back-btn { width: 28px; height: 28px; background: #1e1e2a; border: 0.5px solid #2a2a3a; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #aaa; font-size: 14px; }
+  .stack-vis-bar { margin: 0 20px 14px; background: #1a1a25; border-radius: 12px; border: 0.5px solid #2a2a3a; padding: 12px 14px; }
+  .stack-vis-label { font-size: 11px; color: #555; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+  .bricks-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .brick { width: 18px; height: 12px; border-radius: 3px; transition: background 0.4s ease; }
+  .brick.done-outer { background: #2f7ef5; }
+  .brick.done-inner { background: #b07efa; }
+  .brick.pending { background: #2a2a3a; }
+  .content-area { flex: 1; padding: 0 20px 20px; overflow-y: auto; }
+  .section-label { font-size: 11px; color: #555; letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 10px; }
+  .choice-btn { width: 100%; padding: 14px 16px; margin-bottom: 10px; border-radius: 14px; border: 0.5px solid #2a2a3a; background: #141420; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: border-color 0.2s, background 0.2s; text-align: left; }
+  .choice-btn:hover { background: #1a1a2c; border-color: #3a3a55; }
+  .choice-btn:active { transform: scale(0.98); }
+  .choice-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .icon-outer { background: rgba(47,126,245,0.15); }
+  .icon-inner { background: rgba(176,126,250,0.15); }
+  .icon-exit { background: rgba(136,136,136,0.1); }
+  .choice-text { flex: 1; }
+  .choice-title { color: #e8e8f0; font-size: 14px; font-weight: 500; }
+  .choice-sub { color: #555; font-size: 12px; margin-top: 2px; }
+  .day-picker { margin-bottom: 18px; }
+  .day-dots { display: flex; gap: 6px; }
+  .day-dot { width: 38px; height: 38px; border-radius: 50%; border: 0.5px solid #2a2a3a; background: #141420; display: flex; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+  .day-dot.selected { background: #2f7ef5; border-color: #2f7ef5; color: #fff; }
+  .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+  .option-tile { padding: 12px; background: #141420; border: 0.5px solid #2a2a3a; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .option-tile:hover { background: #1a1a2c; border-color: #3a3a55; }
+  .option-tile.selected-outer { background: rgba(47,126,245,0.12); border-color: #2f7ef5; }
+  .option-tile.selected-inner { background: rgba(176,126,250,0.12); border-color: #b07efa; }
+  .option-tile-icon { font-size: 22px; margin-bottom: 4px; }
+  .option-tile-label { font-size: 12px; color: #bbb; font-weight: 500; }
+  .plan-card { background: #141420; border: 0.5px solid #2a2a3a; border-radius: 14px; overflow: hidden; margin-bottom: 10px; }
+  .plan-card-header { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid #1e1e2a; }
+  .plan-day-badge { background: #1e1e30; border-radius: 6px; padding: 3px 8px; font-size: 11px; color: #666; font-weight: 500; }
+  .plan-card-title { font-size: 13px; color: #ccc; font-weight: 500; }
+  .plan-exercises { padding: 10px 14px; }
+  .exercise-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .exercise-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a2a3a; flex-shrink: 0; }
+  .exercise-name { font-size: 12px; color: #666; }
+  .confirm-btn { width: 100%; padding: 14px; border-radius: 14px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 6px; transition: all 0.15s; }
+  .confirm-btn:active { transform: scale(0.98); }
+  .btn-outer { background: #2f7ef5; color: #fff; }
+  .btn-inner { background: #b07efa; color: #fff; }
+  .btn-disabled { background: #1e1e2a; color: #444; cursor: default; }
+  .q-label { font-size: 14px; color: #ccc; margin-bottom: 14px; line-height: 1.5; }
+  .theme-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #141420; border: 0.5px solid #2a2a3a; border-radius: 20px; margin: 0 6px 8px 0; cursor: pointer; font-size: 12px; color: #aaa; transition: all 0.2s; }
+  .theme-chip:hover { background: #1a1a2c; border-color: #3a3a55; }
+  .theme-chip.selected-inner { background: rgba(176,126,250,0.12); border-color: #b07efa; color: #c9a4fc; }
+  .reflection-box { background: #141420; border: 0.5px solid #2a2a3a; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  .reflection-box-label { font-size: 11px; color: #555; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .reflection-prompt { font-size: 13px; color: #888; line-height: 1.6; font-style: italic; }
+  .success-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; text-align: center; }
+  .success-icon { font-size: 48px; margin-bottom: 16px; }
+  .success-title { font-size: 18px; color: #f0f0f0; font-weight: 500; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 24px; }
+  .success-bricks { display: flex; gap: 5px; justify-content: center; margin-bottom: 20px; }
+  .success-brick { width: 22px; height: 14px; border-radius: 4px; }
+  .nav-bar { padding: 10px 0 14px; display: flex; justify-content: space-around; border-top: 0.5px solid #1a1a25; background: #0d0d12; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  .nav-item i { font-size: 20px; color: #444; }
+  .nav-item span { font-size: 10px; color: #444; }
+  .nav-item.active i, .nav-item.active span { color: #2f7ef5; }
+  .step-dots { display: flex; gap: 5px; justify-content: center; margin-bottom: 16px; }
+  .step-dot { width: 5px; height: 5px; border-radius: 50%; background: #2a2a3a; }
+  .step-dot.active { background: #2f7ef5; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="app">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span><i class="ti ti-wifi" style="font-size:13px"></i>&nbsp;<i class="ti ti-battery" style="font-size:13px"></i></span>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="screen-header" style="padding-top:6px;">
+      <div style="flex:1">
+        <div style="font-size:11px;color:#444;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;">Build</div>
+        <div class="screen-title">Your Stack</div>
+      </div>
+      <div style="width:32px;height:32px;background:#1a1a25;border-radius:50%;border:0.5px solid #2a2a3a;display:flex;align-items:center;justify-content:center;">
+        <i class="ti ti-user" style="font-size:15px;color:#666"></i>
+      </div>
+    </div>
+    <div class="stack-vis-bar">
+      <div class="stack-vis-label">This Week's Stack</div>
+      <div class="bricks-row" id="bricks-home">
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="section-label">What are you building today?</div>
+      <button class="choice-btn" onclick="goTo('screen-outer-1')">
+        <div class="choice-icon icon-outer"><i class="ti ti-barbell" style="font-size:18px;color:#2f7ef5"></i></div>
+        <div class="choice-text"><div class="choice-title">Outer Stack</div><div class="choice-sub">Plan your physical training</div></div>
+        <i class="ti ti-chevron-right" style="font-size:16px;color:#333"></i>
+      </button>
+      <button class="choice-btn" onclick="goTo('screen-inner-1')">
+        <div class="choice-icon icon-inner"><i class="ti ti-brain" style="font-size:18px;color:#b07efa"></i></div>
+        <div class="choice-text"><div class="choice-title">Inner Stack</div><div class="choice-sub">Set an emotional intention</div></div>
+        <i class="ti ti-chevron-right" style="font-size:16px;color:#333"></i>
+      </button>
+      <button class="choice-btn" onclick="goTo('screen-home')">
+        <div class="choice-icon icon-exit"><i class="ti ti-x" style="font-size:16px;color:#666"></i></div>
+        <div class="choice-text"><div class="choice-title">Exit</div><div class="choice-sub">Return to Home</div></div>
+      </button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- OUTER 1: days -->
+  <div id="screen-outer-1" class="screen">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('screen-home')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="screen-title" style="color:#2f7ef5">Outer Stack</div>
+    </div>
+    <div class="stack-vis-bar" style="margin-bottom:10px;">
+      <div class="stack-vis-label">Stack Preview</div>
+      <div class="bricks-row" id="bricks-outer">
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div>
+      </div>
+    </div>
+    <div style="padding:0 20px;margin-bottom:10px;"><div class="step-dots"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div></div>
+    <div class="content-area">
+      <div class="q-label">How many days do you want to work out this week?</div>
+      <div class="day-picker">
+        <div class="day-dots" id="day-dots">
+          <div class="day-dot" onclick="selectDay(1)">1</div>
+          <div class="day-dot" onclick="selectDay(2)">2</div>
+          <div class="day-dot" onclick="selectDay(3)">3</div>
+          <div class="day-dot" onclick="selectDay(4)">4</div>
+          <div class="day-dot" onclick="selectDay(5)">5</div>
+        </div>
+      </div>
+      <button class="confirm-btn btn-disabled" id="btn-days" onclick="if(state.days>0)goTo('screen-outer-2')">Next &rarr;</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- OUTER 2: focus + goal -->
+  <div id="screen-outer-2" class="screen">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('screen-outer-1')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="screen-title" style="color:#2f7ef5">Outer Stack</div>
+    </div>
+    <div style="padding:0 20px;margin-bottom:10px;"><div class="step-dots"><div class="step-dot"></div><div class="step-dot active"></div><div class="step-dot"></div></div></div>
+    <div class="content-area">
+      <div class="q-label">What's your focus?</div>
+      <div class="option-grid" id="focus-grid">
+        <div class="option-tile" onclick="selectFocus('Cardio')"><div class="option-tile-icon">🏃</div><div class="option-tile-label">Cardio</div></div>
+        <div class="option-tile" onclick="selectFocus('HIIT')"><div class="option-tile-icon">⚡</div><div class="option-tile-label">HIIT</div></div>
+        <div class="option-tile" onclick="selectFocus('Strength')"><div class="option-tile-icon">🏋️</div><div class="option-tile-label">Strength</div></div>
+        <div class="option-tile" onclick="selectFocus('Mobility')"><div class="option-tile-icon">🧘</div><div class="option-tile-label">Mobility</div></div>
+      </div>
+      <div class="q-label">What's your goal?</div>
+      <div class="option-grid" id="goal-grid">
+        <div class="option-tile" onclick="selectGoal('Fat Burn')"><div class="option-tile-icon">🔥</div><div class="option-tile-label">Fat Burn</div></div>
+        <div class="option-tile" onclick="selectGoal('Endurance')"><div class="option-tile-icon">💨</div><div class="option-tile-label">Endurance</div></div>
+        <div class="option-tile" onclick="selectGoal('Strength Building')"><div class="option-tile-icon">💪</div><div class="option-tile-label">Strength</div></div>
+        <div class="option-tile" onclick="selectGoal('Recovery')"><div class="option-tile-icon">🌊</div><div class="option-tile-label">Recovery</div></div>
+      </div>
+      <button class="confirm-btn btn-disabled" id="btn-focus-goal" onclick="if(state.focus&&state.goal)goTo('screen-outer-3')">Generate My Plan &rarr;</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- OUTER 3: plan -->
+  <div id="screen-outer-3" class="screen">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('screen-outer-2')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="screen-title" style="color:#2f7ef5">Your Plan</div>
+    </div>
+    <div style="padding:0 20px;margin-bottom:10px;"><div class="step-dots"><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot active"></div></div></div>
+    <div class="content-area" id="plan-content"></div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- INNER 1 -->
+  <div id="screen-inner-1" class="screen">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('screen-home')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="screen-title" style="color:#b07efa">Inner Stack</div>
+    </div>
+    <div class="stack-vis-bar" style="margin-bottom:10px;">
+      <div class="stack-vis-label">Stack Preview</div>
+      <div class="bricks-row" id="bricks-inner">
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="q-label">What inner lift do you want to focus on today?</div>
+      <div style="display:flex;flex-wrap:wrap;" id="theme-chips">
+        <div class="theme-chip" onclick="selectTheme('Boundaries')">🛡️ Boundaries</div>
+        <div class="theme-chip" onclick="selectTheme('Forgiveness')">🤍 Forgiveness</div>
+        <div class="theme-chip" onclick="selectTheme('Gratitude')">✨ Gratitude</div>
+        <div class="theme-chip" onclick="selectTheme('Self-Love')">💜 Self-Love</div>
+        <div class="theme-chip" onclick="selectTheme('Focus')">🎯 Focus</div>
+        <div class="theme-chip" onclick="selectTheme('Resilience')">🌱 Resilience</div>
+      </div>
+      <div class="reflection-box" id="reflection-box" style="display:none;margin-top:16px;">
+        <div class="reflection-box-label">Today's Prompt</div>
+        <div class="reflection-prompt" id="reflection-prompt"></div>
+      </div>
+      <button class="confirm-btn btn-disabled" id="btn-inner" onclick="if(state.theme)confirmInner()" style="margin-top:8px;">Add to My Stack &rarr;</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="screen-success" class="screen">
+    <div class="success-screen">
+      <div class="success-icon" id="success-icon">🏋️</div>
+      <div class="success-title" id="success-title">Stack Updated!</div>
+      <div class="success-sub" id="success-sub">Your sessions have been added as pending blocks.</div>
+      <div class="success-bricks" id="success-bricks"></div>
+      <button class="confirm-btn btn-outer" id="success-btn" onclick="goTo('screen-home')" style="max-width:220px;">Back to Home</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item active"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = { days: 0, focus: '', goal: '', theme: '' };
+const plans = {
+  Cardio: ['20 min steady run','Jump rope 3x3 min','Box step intervals'],
+  HIIT: ['Burpees 4x10','Mountain climbers 3x20','Jump squats 3x15'],
+  Strength: ['Deadlift 4x5','Bench press 3x8','Pull-ups 3x8'],
+  Mobility: ['Hip flexor stretch','Thoracic rotations','Cat-cow flow'],
+};
+const prompts = {
+  Boundaries: 'What is one boundary you want to honor with yourself today?',
+  Forgiveness: 'Who or what are you ready to release a little more today?',
+  Gratitude: 'Name three things you often overlook but are grateful for.',
+  'Self-Love': 'What is one kind thing you will do for yourself without guilt?',
+  Focus: 'What single thing, if done well today, would make everything easier?',
+  Resilience: 'What challenge have you already overcome that prepared you for now?',
+};
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-outer-3') buildPlan();
+}
+function selectDay(n) {
+  state.days = n;
+  document.querySelectorAll('.day-dot').forEach((d,i) => d.classList.toggle('selected', i < n));
+  const btn = document.getElementById('btn-days');
+  btn.classList.remove('btn-disabled'); btn.classList.add('btn-outer');
+  const row = document.getElementById('bricks-outer');
+  [...row.children].forEach((b,i) => b.className = 'brick ' + (i < n ? 'done-outer' : 'pending'));
+}
+function selectFocus(f) {
+  state.focus = f;
+  document.querySelectorAll('#focus-grid .option-tile').forEach(t => t.classList.remove('selected-outer'));
+  event.currentTarget.classList.add('selected-outer');
+  checkFocusGoal();
+}
+function selectGoal(g) {
+  state.goal = g;
+  document.querySelectorAll('#goal-grid .option-tile').forEach(t => t.classList.remove('selected-outer'));
+  event.currentTarget.classList.add('selected-outer');
+  checkFocusGoal();
+}
+function checkFocusGoal() {
+  const btn = document.getElementById('btn-focus-goal');
+  if (state.focus && state.goal) { btn.classList.remove('btn-disabled'); btn.classList.add('btn-outer'); }
+}
+function buildPlan() {
+  const exercises = plans[state.focus] || plans.Strength;
+  let html = `<div style="font-size:12px;color:#555;margin-bottom:14px;letter-spacing:0.5px;text-transform:uppercase;">${state.days} sessions &bull; ${state.focus} &bull; ${state.goal}</div>`;
+  for (let i = 0; i < state.days; i++) {
+    const day = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i];
+    html += `<div class="plan-card"><div class="plan-card-header"><div class="plan-day-badge">${day}</div><div class="plan-card-title">Session ${i+1}</div></div><div class="plan-exercises">`;
+    exercises.forEach(ex => { html += `<div class="exercise-row"><div class="exercise-dot" style="background:#2f7ef5"></div><div class="exercise-name">${ex}</div></div>`; });
+    html += `</div></div>`;
+  }
+  html += `<button class="confirm-btn btn-outer" onclick="confirmOuter()">Confirm & Add to Stack &rarr;</button>`;
+  document.getElementById('plan-content').innerHTML = html;
+}
+function confirmOuter() {
+  const bricksHome = document.getElementById('bricks-home');
+  [...bricksHome.children].slice(0, state.days).forEach(b => b.className = 'brick done-outer');
+  const bricks = Array.from({length: state.days}, () => `<div class="success-brick" style="background:#2f7ef5"></div>`).join('');
+  document.getElementById('success-bricks').innerHTML = bricks;
+  document.getElementById('success-icon').textContent = '💪';
+  document.getElementById('success-title').textContent = 'Outer Stack Ready!';
+  document.getElementById('success-sub').textContent = `${state.days} ${state.focus} sessions added to your Stack.`;
+  document.getElementById('success-btn').className = 'confirm-btn btn-outer';
+  goTo('screen-success');
+}
+function selectTheme(t) {
+  state.theme = t;
+  document.querySelectorAll('#theme-chips .theme-chip').forEach(c => c.classList.remove('selected-inner'));
+  event.currentTarget.classList.add('selected-inner');
+  document.getElementById('reflection-box').style.display = 'block';
+  document.getElementById('reflection-prompt').textContent = prompts[t] || '';
+  const btn = document.getElementById('btn-inner');
+  btn.classList.remove('btn-disabled'); btn.style.background = '#b07efa'; btn.style.color = '#fff';
+}
+function confirmInner() {
+  const bricksHome = document.getElementById('bricks-home');
+  const pending = [...bricksHome.children].find(b => b.className === 'brick pending');
+  if (pending) pending.className = 'brick done-inner';
+  document.getElementById('success-bricks').innerHTML = `<div class="success-brick" style="background:#b07efa"></div>`;
+  document.getElementById('success-icon').textContent = '🌱';
+  document.getElementById('success-title').textContent = 'Inner Stack Set!';
+  document.getElementById('success-sub').textContent = `${state.theme} intention added to your Stack.`;
+  document.getElementById('success-btn').style.background = '#b07efa';
+  goTo('screen-success');
+}
+</script>
+</body>
+</html>

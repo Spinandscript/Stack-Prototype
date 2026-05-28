@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack — Prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #080810;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    color: #f0f0f0;
+  }
+  .logo { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #444; margin-bottom: 12px; }
+  h1 { font-size: 36px; font-weight: 600; margin-bottom: 8px; background: linear-gradient(135deg, #2f7ef5, #b07efa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { font-size: 15px; color: #555; margin-bottom: 48px; text-align: center; line-height: 1.6; max-width: 360px; }
+  .cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 48px; }
+  .card {
+    width: 240px;
+    background: #0d0d18;
+    border: 0.5px solid #2a2a3a;
+    border-radius: 20px;
+    padding: 24px;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .card:hover { background: #141425; border-color: #3a3a55; transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  .card-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .icon-blue { background: rgba(47,126,245,0.15); }
+  .icon-purple { background: rgba(176,126,250,0.15); }
+  .card-label { font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; }
+  .card-title { font-size: 17px; font-weight: 500; color: #e8e8f0; }
+  .card-desc { font-size: 12px; color: #555; line-height: 1.5; }
+  .card-link { font-size: 12px; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+  .divider { width: 40px; height: 1px; background: #1a1a25; margin-bottom: 24px; }
+  .meta { font-size: 12px; color: #333; text-align: center; line-height: 1.8; }
+  .meta a { color: #444; text-decoration: none; }
+  .meta a:hover { color: #666; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; background: #1a1a25; color: #444; margin-bottom: 32px; }
+</style>
+</head>
+<body>
+  <div class="logo">Stack App</div>
+  <h1>Prototype</h1>
+  <p class="subtitle">An interactive fitness + mindfulness app prototype built from the Stack SRS. Click a screen to explore.</p>
+  <div class="badge">UI Prototype &nbsp;·&nbsp; v0.1</div>
+
+  <div class="cards">
+    <a href="build-screen.html" class="card">
+      <div class="card-icon icon-blue"><i class="ti ti-stack-2" style="font-size:20px;color:#2f7ef5"></i></div>
+      <div>
+        <div class="card-label" style="color:#2f7ef5;margin-bottom:4px;">Screen 1</div>
+        <div class="card-title">Build Screen</div>
+      </div>
+      <div class="card-desc">Plan your Outer Stack (workouts) and Inner Stack (intentions). Dynamic brick visualization updates as you choose.</div>
+      <div class="card-link" style="color:#2f7ef5">Open screen <i class="ti ti-arrow-right" style="font-size:12px"></i></div>
+    </a>
+
+    <a href="activity-log.html" class="card">
+      <div class="card-icon icon-purple"><i class="ti ti-clipboard-list" style="font-size:20px;color:#b07efa"></i></div>
+      <div>
+        <div class="card-label" style="color:#b07efa;margin-bottom:4px;">Screen 2</div>
+        <div class="card-title">Activity Log</div>
+      </div>
+      <div class="card-desc">Log set-by-set workouts, track mood after sessions, write Inner Stack reflections, and view session history.</div>
+      <div class="card-link" style="color:#b07efa">Open screen <i class="ti ti-arrow-right" style="font-size:12px"></i></div>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+  <div class="meta">
+    Built with HTML · CSS · Vanilla JS<br>
+    No frameworks · No dependencies · Runs in any browser
+  </div>
+</body>
+</html>

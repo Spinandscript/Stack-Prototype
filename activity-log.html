@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack — Activity Log</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #080810;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .phone { width: 340px; min-height: 700px; background: #0d0d12; border-radius: 36px; border: 1.5px solid #2a2a3a; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+  .status-bar { padding: 12px 20px 6px; display: flex; justify-content: space-between; align-items: center; }
+  .status-bar span { color: #555; font-size: 11px; }
+  .screen { display: none; flex-direction: column; flex: 1; }
+  .screen.active { display: flex; }
+  .scr-header { padding: 10px 20px 12px; display: flex; align-items: center; gap: 10px; }
+  .scr-title { color: #f0f0f0; font-size: 17px; font-weight: 500; }
+  .back-btn { width: 28px; height: 28px; background: #1e1e2a; border: 0.5px solid #2a2a3a; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #aaa; font-size: 14px; flex-shrink: 0; }
+  .content { flex: 1; padding: 0 20px 20px; overflow-y: auto; }
+  .stack-bar { margin: 0 20px 14px; background: #1a1a25; border-radius: 12px; border: 0.5px solid #2a2a3a; padding: 11px 14px; }
+  .bar-label { font-size: 11px; color: #444; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
+  .progress-track { background: #1e1e2a; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 6px; }
+  .progress-fill { height: 5px; border-radius: 4px; transition: width 0.5s ease; }
+  .bricks-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .brick { width: 18px; height: 12px; border-radius: 3px; transition: background 0.35s ease; }
+  .brick.done-outer { background: #2f7ef5; }
+  .brick.done-inner { background: #b07efa; }
+  .brick.pending { background: #2a2a3a; }
+  .brick.partial-outer { background: #1a4a8a; }
+  .sec-label { font-size: 11px; color: #444; letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 10px; }
+  .choice-btn { width: 100%; padding: 14px 16px; margin-bottom: 10px; border-radius: 14px; border: 0.5px solid #2a2a3a; background: #141420; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: border-color 0.2s, background 0.2s; text-align: left; }
+  .choice-btn:hover { background: #1a1a2c; border-color: #3a3a55; }
+  .choice-btn:active { transform: scale(0.98); }
+  .c-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .c-outer { background: rgba(47,126,245,0.15); }
+  .c-inner { background: rgba(176,126,250,0.15); }
+  .c-hist { background: rgba(29,158,117,0.15); }
+  .c-title { color: #e8e8f0; font-size: 14px; font-weight: 500; }
+  .c-sub { color: #555; font-size: 12px; margin-top: 2px; }
+  .ex-card { background: #141420; border: 0.5px solid #2a2a3a; border-radius: 14px; overflow: hidden; margin-bottom: 10px; }
+  .ex-card-hdr { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid #1e1e2a; }
+  .ex-name { font-size: 13px; color: #ccc; font-weight: 500; flex: 1; }
+  .ex-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-done { background: rgba(47,126,245,0.2); color: #5b9ef0; }
+  .badge-pending { background: #1e1e2a; color: #555; }
+  .badge-partial { background: rgba(47,126,245,0.1); color: #3a6aaa; }
+  .ex-sets { padding: 10px 14px; }
+  .set-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid #1a1a22; }
+  .set-row:last-child { border-bottom: none; }
+  .set-num { font-size: 11px; color: #444; width: 20px; }
+  .set-detail { font-size: 12px; color: #777; flex: 1; }
+  .mark-btn { padding: 4px 10px; border-radius: 8px; border: 0.5px solid #2a2a3a; background: #1e1e2a; color: #888; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+  .mark-btn.done { background: rgba(47,126,245,0.2); border-color: #2f7ef5; color: #5b9ef0; }
+  .mark-btn:active { transform: scale(0.96); }
+  .confirm-btn { width: 100%; padding: 14px; border-radius: 14px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px; transition: all 0.15s; }
+  .confirm-btn:active { transform: scale(0.98); }
+  .btn-outer { background: #2f7ef5; color: #fff; }
+  .btn-inner { background: #b07efa; color: #fff; }
+  .btn-disabled { background: #1e1e2a; color: #444; cursor: default; }
+  .mood-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .mood-opt { flex: 1; padding: 10px 6px; border-radius: 12px; border: 0.5px solid #2a2a3a; background: #141420; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .mood-opt:hover { background: #1a1a2c; border-color: #3a3a55; }
+  .mood-opt.selected { background: rgba(47,126,245,0.12); border-color: #2f7ef5; }
+  .mood-emoji { font-size: 22px; display: block; margin-bottom: 3px; }
+  .mood-label { font-size: 10px; color: #555; }
+  .note-area { width: 100%; background: #141420; border: 0.5px solid #2a2a3a; border-radius: 12px; padding: 10px 12px; color: #ccc; font-size: 13px; resize: none; outline: none; font-family: inherit; line-height: 1.5; }
+  .note-area:focus { border-color: #3a3a55; }
+  .err-msg { font-size: 12px; color: #e24b4a; margin-top: 6px; display: none; }
+  .hist-entry { background: #141420; border: 0.5px solid #2a2a3a; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .hist-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .hist-info { flex: 1; }
+  .hist-title { font-size: 13px; color: #ccc; font-weight: 500; }
+  .hist-meta { font-size: 11px; color: #555; margin-top: 2px; }
+  .hist-status { font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+  .hs-done { background: rgba(29,158,117,0.15); color: #1D9E75; }
+  .hs-partial { background: rgba(47,126,245,0.12); color: #3a6aaa; }
+  .q-label { font-size: 14px; color: #ccc; margin-bottom: 14px; line-height: 1.5; }
+  .inner-prompt { background: #1a1020; border: 0.5px solid #3a2a4a; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  .inner-prompt-label { font-size: 11px; color: #6a4a9a; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .inner-prompt-text { font-size: 13px; color: #9a7acc; line-height: 1.6; font-style: italic; }
+  .nav-bar { padding: 10px 0 14px; display: flex; justify-content: space-around; border-top: 0.5px solid #1a1a25; background: #0d0d12; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  .nav-item i { font-size: 20px; color: #444; }
+  .nav-item span { font-size: 10px; color: #444; }
+  .nav-item.active i, .nav-item.active span { color: #2f7ef5; }
+  .success-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; text-align: center; }
+  .success-icon { font-size: 48px; margin-bottom: 16px; }
+  .success-title { font-size: 18px; color: #f0f0f0; font-weight: 500; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="app">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span><i class="ti ti-wifi" style="font-size:13px"></i>&nbsp;<i class="ti ti-battery" style="font-size:13px"></i></span>
+  </div>
+
+  <!-- HOME -->
+  <div id="sc-home" class="screen active">
+    <div class="scr-header" style="padding-top:6px;">
+      <div style="flex:1">
+        <div style="font-size:11px;color:#444;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;">Activity</div>
+        <div class="scr-title">Log</div>
+      </div>
+      <div style="background:#1a1a25;border-radius:10px;border:0.5px solid #2a2a3a;padding:5px 10px;display:flex;align-items:center;gap:5px;cursor:pointer;" onclick="goTo('sc-history')">
+        <i class="ti ti-clock" style="font-size:14px;color:#555"></i>
+        <span style="font-size:12px;color:#555">History</span>
+      </div>
+    </div>
+    <div class="stack-bar">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="bar-label">Weekly Progress</div>
+        <div style="font-size:11px;color:#555" id="home-pct-label">0% complete</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="home-prog" style="width:0%;background:#2f7ef5;"></div></div>
+      <div class="bricks-row" id="bricks-home">
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+        <div class="brick pending"></div><div class="brick pending"></div><div class="brick pending"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="sec-label">Select a session</div>
+      <button class="choice-btn" onclick="goTo('sc-outer')">
+        <div class="c-icon c-outer"><i class="ti ti-barbell" style="font-size:18px;color:#2f7ef5"></i></div>
+        <div style="flex:1"><div class="c-title">Outer Stack Session</div><div class="c-sub">Log your physical workout</div></div>
+        <i class="ti ti-chevron-right" style="font-size:16px;color:#333"></i>
+      </button>
+      <button class="choice-btn" onclick="goTo('sc-inner')">
+        <div class="c-icon c-inner"><i class="ti ti-brain" style="font-size:18px;color:#b07efa"></i></div>
+        <div style="flex:1"><div class="c-title">Inner Stack Session</div><div class="c-sub">Complete your reflection</div></div>
+        <i class="ti ti-chevron-right" style="font-size:16px;color:#333"></i>
+      </button>
+      <button class="choice-btn" onclick="goTo('sc-history')">
+        <div class="c-icon c-hist"><i class="ti ti-list-check" style="font-size:18px;color:#1D9E75"></i></div>
+        <div style="flex:1"><div class="c-title">Recorded Sessions</div><div class="c-sub" id="hist-count-label">2 sessions logged</div></div>
+        <i class="ti ti-chevron-right" style="font-size:16px;color:#333"></i>
+      </button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- OUTER CHECKLIST -->
+  <div id="sc-outer" class="screen">
+    <div class="scr-header">
+      <div class="back-btn" onclick="goTo('sc-home')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="scr-title" style="color:#2f7ef5">Outer Stack</div>
+    </div>
+    <div class="stack-bar" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="bar-label">Session Progress</div>
+        <div style="font-size:11px;color:#555" id="outer-pct-lbl">0 / 10 done</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="outer-prog" style="width:0%;background:#2f7ef5;"></div></div>
+    </div>
+    <div class="content" id="outer-checklist"></div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- MOOD -->
+  <div id="sc-mood" class="screen">
+    <div class="scr-header">
+      <div class="back-btn" onclick="goTo('sc-outer')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="scr-title">Session Reflection</div>
+    </div>
+    <div class="content">
+      <div class="q-label" style="margin-top:4px;">How are you feeling after that session?</div>
+      <div class="mood-row" id="mood-row">
+        <div class="mood-opt" onclick="selectMood(this,'😔','Rough')"><span class="mood-emoji">😔</span><span class="mood-label">Rough</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'😐','Meh')"><span class="mood-emoji">😐</span><span class="mood-label">Meh</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'🙂','Good')"><span class="mood-emoji">🙂</span><span class="mood-label">Good</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'😄','Crushed it')"><span class="mood-emoji">😄</span><span class="mood-label">Crushed it</span></div>
+      </div>
+      <div class="q-label" style="font-size:13px;color:#777;">Quick note <span style="color:#444;">(optional)</span></div>
+      <textarea class="note-area" id="note-input" rows="3" placeholder="How did it feel? Any PRs?"></textarea>
+      <button class="confirm-btn btn-disabled" id="btn-mood" onclick="if(st.mood)completeMood()" style="margin-top:14px;">Save Reflection &rarr;</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- INNER -->
+  <div id="sc-inner" class="screen">
+    <div class="scr-header">
+      <div class="back-btn" onclick="goTo('sc-home')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="scr-title" style="color:#b07efa">Inner Stack</div>
+    </div>
+    <div class="content">
+      <div class="inner-prompt">
+        <div class="inner-prompt-label">Today's Inner Lift — Gratitude</div>
+        <div class="inner-prompt-text">"Name three things you often overlook but are grateful for."</div>
+      </div>
+      <div class="q-label" style="font-size:13px;color:#9a7acc;">Write your reflection <span style="color:#5a4a6a;">(min. 10 chars)</span></div>
+      <textarea class="note-area" id="inner-note" rows="5" placeholder="I'm grateful for..." style="border-color:#3a2a4a;background:#1a1020;color:#c4a8f0;" oninput="checkInner()"></textarea>
+      <div class="err-msg" id="inner-err">Please write a short reflection to complete your Inner Lift.</div>
+      <button class="confirm-btn btn-disabled" id="btn-inner-submit" onclick="completeInner()" style="margin-top:14px;">Complete Inner Lift &rarr;</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="sc-history" class="screen">
+    <div class="scr-header">
+      <div class="back-btn" onclick="goTo('sc-home')"><i class="ti ti-arrow-left" style="font-size:14px"></i></div>
+      <div class="scr-title">Recorded Sessions</div>
+    </div>
+    <div class="content" id="history-list"></div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="sc-success" class="screen">
+    <div class="success-screen">
+      <div class="success-icon" id="succ-icon">💪</div>
+      <div class="success-title" id="succ-title">Session Recorded!</div>
+      <div class="success-sub" id="succ-sub">Your progress has been saved and your Stack updated.</div>
+      <button class="confirm-btn btn-outer" id="succ-btn" onclick="goTo('sc-home')" style="max-width:220px;">Back to Activity Log</button>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item"><i class="ti ti-home"></i><span>Home</span></div>
+      <div class="nav-item"><i class="ti ti-stack-2"></i><span>Build</span></div>
+      <div class="nav-item active"><i class="ti ti-clipboard-list"></i><span>Log</span></div>
+      <div class="nav-item"><i class="ti ti-brain"></i><span>Memory</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const st = {
+  mood: '',
+  exercises: [
+    { name: 'Deadlift', sets: [{reps:'4x5',done:false},{reps:'4x5',done:false},{reps:'4x5',done:false},{reps:'4x5',done:false}] },
+    { name: 'Bench Press', sets: [{reps:'3x8',done:false},{reps:'3x8',done:false},{reps:'3x8',done:false}] },
+    { name: 'Pull-Ups', sets: [{reps:'3x8',done:false},{reps:'3x8',done:false},{reps:'3x8',done:false}] },
+  ],
+  history: [
+    { type:'outer', title:'Strength — Session 1', date:'Mon, May 26', status:'complete', pct:100 },
+    { type:'inner', title:'Inner Lift — Self-Love', date:'Mon, May 26', status:'complete', pct:100 },
+  ]
+};
+
+function getTotalSets() { return st.exercises.reduce((a,e) => a + e.sets.length, 0); }
+function getDoneSets() { return st.exercises.reduce((a,e) => a + e.sets.filter(s=>s.done).length, 0); }
+function getDoneExercises() { return st.exercises.filter(e => e.sets.every(s=>s.done)).length; }
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'sc-outer') renderChecklist();
+  if (id === 'sc-history') renderHistory();
+  updateHomeBricks();
+}
+
+function updateHomeBricks() {
+  const total = getTotalSets(), done = getDoneSets();
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const fill = document.getElementById('home-prog');
+  if (fill) fill.style.width = pct + '%';
+  const lbl = document.getElementById('home-pct-lbl');
+  if (lbl) lbl.textContent = pct + '% complete';
+  const bricks = document.getElementById('bricks-home');
+  if (bricks) {
+    const children = [...bricks.children];
+    const doneEx = getDoneExercises();
+    children.forEach((b, i) => {
+      if (i < doneEx) b.className = 'brick done-outer';
+      else if (i < 3 && done > 0) b.className = 'brick partial-outer';
+      else if (i < 6) b.className = 'brick pending';
+      else if (i < 7) b.className = 'brick done-inner';
+      else b.className = 'brick pending';
+    });
+  }
+  const hc = document.getElementById('hist-count-label');
+  if (hc) hc.textContent = st.history.length + ' sessions logged';
+}
+
+function renderChecklist() {
+  const total = getTotalSets(), done = getDoneSets();
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const prog = document.getElementById('outer-prog');
+  if (prog) prog.style.width = pct + '%';
+  const lbl = document.getElementById('outer-pct-lbl');
+  if (lbl) lbl.textContent = done + ' / ' + total + ' done';
+  let html = '<div class="sec-label">Strength — Session 2</div>';
+  st.exercises.forEach((ex, ei) => {
+    const exDone = ex.sets.every(s => s.done);
+    const exPartial = ex.sets.some(s => s.done) && !exDone;
+    const badgeCls = exDone ? 'badge-done' : exPartial ? 'badge-partial' : 'badge-pending';
+    const badgeTxt = exDone ? 'Done' : exPartial ? 'Partial' : 'Pending';
+    html += `<div class="ex-card"><div class="ex-card-hdr"><div class="ex-name">${ex.name}</div><span class="ex-badge ${badgeCls}">${badgeTxt}</span></div><div class="ex-sets">`;
+    ex.sets.forEach((set, si) => {
+      html += `<div class="set-row"><div class="set-num">S${si+1}</div><div class="set-detail">${set.reps}</div><button class="mark-btn ${set.done?'done':''}" onclick="toggleSet(${ei},${si})">${set.done ? '✓ Done' : 'Mark done'}</button></div>`;
+    });
+    html += '</div></div>';
+  });
+  if (pct === 100) {
+    html += `<button class="confirm-btn btn-outer" onclick="goTo('sc-mood')">Session Complete — Add Reflection &rarr;</button>`;
+  } else if (pct > 0) {
+    html += `<button class="confirm-btn" style="background:#1a1a2c;border:0.5px solid #2a2a3a;color:#666;cursor:pointer;" onclick="savePartial()">Save progress &amp; exit</button>`;
+  } else {
+    html += `<div style="font-size:12px;color:#444;text-align:center;padding:10px 0;">Mark sets as done to track your progress</div>`;
+  }
+  document.getElementById('outer-checklist').innerHTML = html;
+}
+
+function toggleSet(ei, si) {
+  st.exercises[ei].sets[si].done = !st.exercises[ei].sets[si].done;
+  renderChecklist();
+  updateHomeBricks();
+}
+
+function savePartial() {
+  const done = getDoneSets(), total = getTotalSets();
+  const pct = Math.round(done / total * 100);
+  st.history.push({ type:'outer', title:'Strength — Session 2', date:'Today', status:'partial', pct:pct });
+  document.getElementById('succ-icon').textContent = '💾';
+  document.getElementById('succ-title').textContent = 'Progress Saved!';
+  document.getElementById('succ-sub').textContent = `${pct}% saved. Pick up where you left off anytime.`;
+  document.getElementById('succ-btn').className = 'confirm-btn btn-outer';
+  goTo('sc-success');
+}
+
+function selectMood(el, emoji, label) {
+  st.mood = { emoji, label };
+  document.querySelectorAll('.mood-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const btn = document.getElementById('btn-mood');
+  btn.classList.remove('btn-disabled'); btn.classList.add('btn-outer');
+}
+
+function completeMood() {
+  const note = document.getElementById('note-input').value || '';
+  st.history.push({ type:'outer', title:'Strength — Session 2', date:'Today', status:'complete', pct:100, mood:st.mood.emoji, note:note });
+  st.exercises.forEach(e => e.sets.forEach(s => s.done = true));
+  updateHomeBricks();
+  document.getElementById('succ-icon').textContent = '💪';
+  document.getElementById('succ-title').textContent = 'Session Recorded!';
+  document.getElementById('succ-sub').textContent = `Great work! Mood: ${st.mood.emoji} ${st.mood.label}. Your Stack brick just lit up.`;
+  document.getElementById('succ-btn').className = 'confirm-btn btn-outer';
+  goTo('sc-success');
+}
+
+function checkInner() {
+  const val = document.getElementById('inner-note').value || '';
+  const btn = document.getElementById('btn-inner-submit');
+  const err = document.getElementById('inner-err');
+  if (val.length >= 10) {
+    btn.classList.remove('btn-disabled');
+    btn.style.background = '#b07efa'; btn.style.color = '#fff'; btn.style.border = 'none';
+    err.style.display = 'none';
+  } else {
+    btn.classList.add('btn-disabled');
+    btn.style.background = ''; btn.style.color = '';
+  }
+}
+
+function completeInner() {
+  const val = document.getElementById('inner-note').value || '';
+  if (val.length < 10) { document.getElementById('inner-err').style.display = 'block'; return; }
+  st.history.push({ type:'inner', title:'Inner Lift — Gratitude', date:'Today', status:'complete', pct:100, note:val });
+  const bricks = document.getElementById('bricks-home');
+  if (bricks) { const p = [...bricks.children].find(b => b.className === 'brick pending'); if (p) p.className = 'brick done-inner'; }
+  document.getElementById('succ-icon').textContent = '🌱';
+  document.getElementById('succ-title').textContent = 'Inner Lift Complete!';
+  document.getElementById('succ-sub').textContent = 'Your Gratitude reflection has been saved. Your Inner Stack brick is glowing purple.';
+  document.getElementById('succ-btn').style.background = '#b07efa';
+  document.getElementById('succ-btn').style.color = '#fff';
+  document.getElementById('succ-btn').style.border = 'none';
+  goTo('sc-success');
+}
+
+function renderHistory() {
+  if (!st.history.length) {
+    document.getElementById('history-list').innerHTML = '<div style="text-align:center;padding:40px 20px;color:#444;font-size:13px;">No sessions logged yet.</div>';
+    return;
+  }
+  let html = '<div class="sec-label">All sessions</div>';
+  [...st.history].reverse().forEach(h => {
+    const color = h.type === 'outer' ? '#2f7ef5' : '#b07efa';
+    const stCls = h.status === 'complete' ? 'hs-done' : 'hs-partial';
+    const stTxt = h.status === 'complete' ? 'Complete' : 'Partial ' + h.pct + '%';
+    const typeLabel = h.type === 'outer' ? 'Outer Stack' : 'Inner Stack';
+    html += `<div class="hist-entry">
+      <div class="hist-dot" style="background:${color}"></div>
+      <div class="hist-info">
+        <div class="hist-title">${h.title}</div>
+        <div class="hist-meta">${typeLabel} &bull; ${h.date}${h.mood ? ' &bull; ' + h.mood : ''}</div>
+      </div>
+      <span class="hist-status ${stCls}">${stTxt}</span>
+    </div>`;
+  });
+  document.getElementById('history-list').innerHTML = html;
+}
+
+updateHomeBricks();
+</script>
+</body>
+</html>
