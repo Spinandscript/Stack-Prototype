@@ -1,4 +1,5 @@
 # Stack — Interactive UI Prototype
+https://spinandscript.github.io/Stack-Prototype
 
 A mobile-first interactive prototype for **Stack**, a fitness and mindfulness app that combines physical training (Outer Stack) with emotional intention-setting (Inner Stack).
 
