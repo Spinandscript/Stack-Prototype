@@ -2,7 +2,7 @@
 
 A mobile-first interactive prototype for **Stack**, a fitness and mindfulness app that combines physical training (Outer Stack) with emotional intention-setting (Inner Stack).
 
-Built from the Stack Software Requirements Specification (SRS) as a class group project, then revisited and prototyped as a fully interactive front-end demo.
+Built from the Stack Software Requirements Specification (SRS) as a class group project, then prototyped as a fully interactive front-end demo.
 
 ---
 
